@@ -228,7 +228,7 @@
     <script>
         // ⚠️ [설정 필수] 본인의 디스코드 Client ID를 입력해주세요.
         // 디스코드 개발자 포털(Discord Developer Portal)에서 확인 가능합니다.
-        const DISCORD_CLIENT_ID = 'YOUR_DISCORD_CLIENT_ID';
+        const DISCORD_CLIENT_ID = '1510264998826606602';
         
         // 리다이렉트 URI 자동 동적 생성 (프로토콜 + 도메인 + API 주소)
         const REDIRECT_URI = encodeURIComponent(window.location.origin + '/api/reserve?action=callback');
@@ -299,7 +299,7 @@
                     })
                 });
 
-                if (response.ok) {
+                if (response.ok) {            
                     alert("예약이 성공적으로 완료되었습니다! 디스코드를 확인해 주세요.");
                     // 예약 완료 시 주소창 파라미터가 깔끔하게 청소된 초기 상태로 돌립니다.
                     window.location.href = window.location.origin;
