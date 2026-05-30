@@ -43,7 +43,7 @@
         h2 {
             margin-top: 0;
             font-size: 22px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             font-weight: 600;
         }
 
@@ -113,6 +113,58 @@
         button:hover {
             background-color: #555555; 
         }
+
+        /* 디스코드 사용자 프로필 스타일 */
+        .discord-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background-color: #5865F2;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .discord-profile img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+        
+        .discord-profile .info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .discord-profile .name {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .discord-profile .status {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+        
+        .discord-login-btn {
+            background-color: #5865F2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            padding: 14px;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+        
+        .discord-login-btn:hover {
+            background-color: #4752C4;
+        }
     </style>
 </head>
 <body>
@@ -122,42 +174,88 @@
         
         <h2>사진관 예약</h2>
         
-        <div class="input-group">
-            <label for="datePicker">예약 날짜 (주말만 가능)</label>
-            <input type="date" id="datePicker" onchange="checkWeekend(this)">
-        </div>
-        
-        <div class="input-group">
-            <label for="inGameName">인게임 닉네임</label>
-            <input type="text" id="inGameName" placeholder="인게임 닉네임을 입력해주세요">
-        </div>
-
-        <div class="input-group">
-            <label for="discordName">디스코드 닉네임</label>
-            <input type="text" id="discordName" placeholder="ex) 사용자#1234 또는 새 닉네임">
+        <!-- [세션 1: 디스코드 미인증 상태] 로그인 링크 노출 -->
+        <div id="loginSection">
+            <p style="font-size: 14px; color:#666; margin-bottom: 25px; line-height: 1.5;">
+                본인 인증 및 안전한 예약을 위해<br>디스코드 로그인이 필요합니다.
+            </p>
+            <a href="#" id="discordLoginLink" class="discord-login-btn">
+                <span>디스코드 계정으로 로그인</span>
+            </a>
         </div>
 
-        <div class="input-group">
-            <label for="gameType">게임 종류</label>
-            <select id="gameType">
-                <option value="" disabled selected>게임을 선택해주세요</option>
-                <option value="도스온라인">1. 도스온라인</option>
-                <option value="피버온라인">2. 피버온라인</option>
-            </select>
-        </div>
+        <!-- [세션 2: 디스코드 인증 완료 상태] 예약 폼 노출 -->
+        <div id="formSection" style="display: none;">
+            <div class="discord-profile">
+                <img id="userAvatar" src="" alt="avatar">
+                <div class="info">
+                    <span class="name" id="userName">DiscordUser</span>
+                    <span class="status">🟢 디스코드 인증 성공</span>
+                </div>
+            </div>
 
-        <div class="privacy-wrap">
-            <label>
-                <input type="checkbox" id="privacyConsent" style="margin-top: 2px;">
-                <span>[필수] 개인정보 수집 및 이용 동의<br>
-                <small style="color: #e74c3c;">(※ 노쇼 방지를 위해 접속 IP 주소가 수집됩니다. 수집된 IP는 촬영 후 파기됩니다.)</small></span>
-            </label>
-        </div>
+            <div class="input-group">
+                <label for="datePicker">예약 날짜 (주말만 가능)</label>
+                <input type="date" id="datePicker" onchange="checkWeekend(this)">
+            </div>
+            
+            <div class="input-group">
+                <label for="inGameName">인게임 닉네임</label>
+                <input type="text" id="inGameName" placeholder="인게임 닉네임을 입력해주세요">
+            </div>
 
-        <button onclick="submitReservation()">예약 신청하기</button>
+            <div class="input-group">
+                <label for="gameType">게임 종류</label>
+                <select id="gameType">
+                    <option value="" disabled selected>게임을 선택해주세요</option>
+                    <option value="도스온라인">1. 도스온라인</option>
+                    <option value="피버온라인">2. 피버온라인</option>
+                </select>
+            </div>
+
+            <div class="privacy-wrap">
+                <label>
+                    <input type="checkbox" id="privacyConsent" style="margin-top: 2px;">
+                    <span>[필수] 개인정보 수집 및 이용 동의<br>
+                    <small style="color: #e74c3c;">(※ 허위 예약 예방 및 도배 방지를 위해 접속 IP 주소와 디스코드 ID가 수집됩니다.)</small></span>
+                </label>
+            </div>
+
+            <button onclick="submitReservation()">예약 신청하기</button>
+        </div>
     </div>
 
     <script>
+        // ⚠️ [설정 필수] 본인의 디스코드 Client ID를 입력해주세요.
+        // 디스코드 개발자 포털(Discord Developer Portal)에서 확인 가능합니다.
+        const DISCORD_CLIENT_ID = 'YOUR_DISCORD_CLIENT_ID';
+        
+        // 리다이렉트 URI 자동 동적 생성 (프로토콜 + 도메인 + API 주소)
+        const REDIRECT_URI = encodeURIComponent(window.location.origin + '/api/reserve?action=callback');
+        
+        // 로그인 링크 세팅 (디스코드 가입 정보 중 기본 사용자 정보 'identify'만 가져오는 스코프 지정)
+        document.getElementById('discordLoginLink').href = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=identify`;
+
+        // URL 파라미터 읽어오기 (OAuth 콜백 처리 완료 후 백엔드가 주소창에 넘겨준 토큰 정보)
+        const urlParams = new URLSearchParams(window.location.search);
+        const authStatus = urlParams.get('status');
+        const discordId = urlParams.get('discordId');
+        const discordName = urlParams.get('discordName');
+        const avatar = urlParams.get('avatar');
+
+        // 디스코드 로그인 인증 성공 유무에 따른 화면 분기
+        if (authStatus === 'success' && discordId) {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('formSection').style.display = 'block';
+            document.getElementById('userAvatar').src = avatar;
+            document.getElementById('userName').innerText = discordName;
+        } else if (authStatus === 'error') {
+            alert('디스코드 로그인 인증에 실패했습니다. 다시 시도해 주세요.');
+            // 주소창 깔끔하게 유지하기 위해 기본 주소로 이동
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        // 주말 날짜 선택 검증 함수
         function checkWeekend(inputElement) {
             const selectedValue = inputElement.value;
             if (!selectedValue) return; 
@@ -171,10 +269,10 @@
             }
         }
 
-        function submitReservation() {
+        // 예약 제출 처리
+        async function submitReservation() {
             const dateInput = document.getElementById('datePicker').value;
             const inGameNameInput = document.getElementById('inGameName').value;
-            const discordNameInput = document.getElementById('discordName').value;
             const gameTypeInput = document.getElementById('gameType').value;
             const isConsentChecked = document.getElementById('privacyConsent').checked;
 
@@ -183,39 +281,28 @@
                 return;
             }
 
-            // 필수 입력 검증 항목에서 shootType 제거
-            if (!dateInput || !inGameNameInput || !discordNameInput || !gameTypeInput) {
+            if (!dateInput || !inGameNameInput || !gameTypeInput) {
                 alert("모든 항목을 입력하고 선택해주세요.");
                 return;
             }
 
-            // 서버 전송 함수 호출에서 shootType 인자 제거
-            sendToServer(dateInput, inGameNameInput, discordNameInput, gameTypeInput);
-        }
-
-        // 받는 변수 및 body JSON에서 type 제거
-        async function sendToServer(date, inGameName, discordName, gameType) {
             try {
                 const response = await fetch('/api/reserve', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        date: date, 
-                        inGameName: inGameName, 
-                        discordName: discordName, 
-                        gameType: gameType 
+                        date: dateInput, 
+                        inGameName: inGameNameInput, 
+                        gameType: gameTypeInput,
+                        discordId: discordId,       // 디스코드 고유 ID값 전송
+                        discordName: discordName     // 디스코드 닉네임 전송
                     })
                 });
 
                 if (response.ok) {
-                    alert("예약이 성공적으로 완료되었습니다!");
-                    
-                    // 폼 초기화 로직에서 shootType 제거
-                    document.getElementById('datePicker').value = '';
-                    document.getElementById('inGameName').value = '';
-                    document.getElementById('discordName').value = '';
-                    document.getElementById('gameType').value = '';
-                    document.getElementById('privacyConsent').checked = false;
+                    alert("예약이 성공적으로 완료되었습니다! 디스코드를 확인해 주세요.");
+                    // 예약 완료 시 주소창 파라미터가 깔끔하게 청소된 초기 상태로 돌립니다.
+                    window.location.href = window.location.origin;
                 } else {
                     const errorData = await response.json();
                     alert("예약 실패: " + errorData.message);
